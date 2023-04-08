@@ -2,51 +2,43 @@ package database
 
 import (
 	"fmt"
+	"os"
 	"project_final/models"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-type Database struct {
-	Host      string
-	Username  string
-	Password  string
-	Port      int
-	Name      string
-	DebugMode string
-}
-
-const (
-	DB_HOST     = "localhost"
-	DB_USER     = "postgres"
-	DB_PASSWORD = "root"
-	DB_PORT     = 5432
-	DB_NAME     = "project_final"
-	DEBUG_MODE  = true // true/false
-)
+// type Database struct {
+// 	Host      string
+// 	Username  string
+// 	Password  string
+// 	Port      int
+// 	Name      string
+// 	DebugMode string
+// }
 
 var (
-	db  *gorm.DB
-	err error
+	DB_HOST     = os.Getenv("DB_HOST")
+	DB_USER     = os.Getenv("DB_USER")
+	DB_PASSWORD = os.Getenv("DB_PASSWORD")
+	DB_PORT     = os.Getenv("DB_PORT")
+	DB_NAME     = os.Getenv("DB_NAME")
+	DEBUG_MODE  = os.Getenv("DEBUG_MODE")
+	db          *gorm.DB
+	err         error
 )
 
-func StartDB(conf *Database) *gorm.DB {
-	config := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=disable",
+func StartDB() *gorm.DB {
+	config := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
 		DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, DB_PORT)
-
-	if conf.Host != "" {
-		config = fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=disable",
-			conf.Host, conf.Username, conf.Password, conf.Name, conf.Port)
-	}
 
 	db, err = gorm.Open(postgres.Open(config), &gorm.Config{})
 	if err != nil {
 		panic(err)
 	}
 
-	if conf.DebugMode == "true" || DEBUG_MODE {
-		fmt.Println(conf.DebugMode, DEBUG_MODE)
+	if DEBUG_MODE == "true" {
 		db.Debug().AutoMigrate(models.User{}, models.SocialMedia{}, models.Photo{}, models.Comment{})
 		return db
 	}
@@ -56,7 +48,7 @@ func StartDB(conf *Database) *gorm.DB {
 }
 
 func GetDB() *gorm.DB {
-	if DEBUG_MODE {
+	if DEBUG_MODE == "true" {
 		return db.Debug()
 	}
 
