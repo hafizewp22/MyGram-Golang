@@ -9,15 +9,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// type Database struct {
-// 	Host      string
-// 	Username  string
-// 	Password  string
-// 	Port      int
-// 	Name      string
-// 	DebugMode string
-// }
-
 var (
 	DB_HOST     = os.Getenv("DB_HOST")
 	DB_USER     = os.Getenv("DB_USER")
