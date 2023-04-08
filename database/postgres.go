@@ -46,6 +46,7 @@ func StartDB(conf *Database) *gorm.DB {
 	}
 
 	if conf.DebugMode == "true" || DEBUG_MODE {
+		fmt.Println(conf.DebugMode, DEBUG_MODE)
 		db.Debug().AutoMigrate(models.User{}, models.SocialMedia{}, models.Photo{}, models.Comment{})
 		return db
 	}
