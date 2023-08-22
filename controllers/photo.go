@@ -13,15 +13,21 @@ import (
 
 func GetAllPhoto(ctx *gin.Context) {
 	db := database.GetDB()
-	userData := ctx.MustGet("userData").(jwt.MapClaims)
-	photo := models.Photo{}
-
-	photo.UserID = uint(userData["id"].(float64))
+	photo := []models.Photo{} // Initialize socialMedia as a slice
 
 	err := db.Find(&photo).Error
 
 	if err != nil {
 		panic(err)
+	}
+
+	for i := range photo {
+		user := models.APIUser{}
+		errUser := db.Model(&models.User{}).Find(&user, "id=?", photo[i].UserID).Error
+		if errUser != nil {
+			panic(errUser)
+		}
+		photo[i].User = &user
 	}
 
 	ctx.JSON(http.StatusOK, photo)
@@ -30,6 +36,7 @@ func GetAllPhoto(ctx *gin.Context) {
 func GetPhoto(ctx *gin.Context) {
 	db := database.GetDB()
 	userData := ctx.MustGet("userData").(jwt.MapClaims)
+	user := models.APIUser{}
 	photo := models.Photo{}
 	PhotoID, _ := strconv.Atoi(ctx.Param("PhotoID"))
 
@@ -41,12 +48,21 @@ func GetPhoto(ctx *gin.Context) {
 		panic(err)
 	}
 
+	errUser := db.Model(&models.User{}).First(&user, "id=?", photo.UserID).Error
+	if errUser != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, errUser)
+		return
+	}
+
+	photo.User = &user
+
 	ctx.JSON(http.StatusOK, photo)
 }
 
 func CreatePhoto(ctx *gin.Context) {
 	db := database.GetDB()
 	userData := ctx.MustGet("userData").(jwt.MapClaims)
+	user := models.APIUser{}
 	photo := models.Photo{}
 
 	err := ctx.ShouldBindJSON(&photo)
@@ -65,12 +81,21 @@ func CreatePhoto(ctx *gin.Context) {
 		return
 	}
 
+	errUser := db.Model(&models.User{}).First(&user, "id=?", photo.UserID).Error
+	if errUser != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, errUser)
+		return
+	}
+
+	photo.User = &user
+
 	ctx.JSON(http.StatusCreated, photo)
 }
 
 func UpdatePhoto(ctx *gin.Context) {
 	db := database.GetDB()
 	userData := ctx.MustGet("userData").(jwt.MapClaims)
+	user := models.APIUser{}
 	photo := models.Photo{}
 	PhotoID, _ := strconv.Atoi(ctx.Param("PhotoID"))
 
@@ -87,6 +112,14 @@ func UpdatePhoto(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
+
+	errUser := db.Model(&models.User{}).First(&user, "id=?", photo.UserID).Error
+	if errUser != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, errUser)
+		return
+	}
+
+	photo.User = &user
 
 	ctx.JSON(http.StatusOK, photo)
 }

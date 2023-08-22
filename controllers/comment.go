@@ -13,15 +13,28 @@ import (
 
 func GetAllComment(ctx *gin.Context) {
 	db := database.GetDB()
-	userData := ctx.MustGet("userData").(jwt.MapClaims)
-	comment := models.Comment{}
-
-	comment.UserID = uint(userData["id"].(float64))
+	comment := []models.Comment{} // Initialize socialMedia as a slice
 
 	err := db.Find(&comment).Error
 
 	if err != nil {
 		panic(err)
+	}
+
+	for i := range comment {
+		user := models.APIUser{}
+		errUser := db.Model(&models.User{}).Find(&user, "id=?", comment[i].UserID).Error
+		if errUser != nil {
+			panic(errUser)
+		}
+		comment[i].User = &user
+
+		photo := models.Photo{}
+		errPhoto := db.Model(&models.Photo{}).Find(&photo, "id=?", comment[i].PhotoID).Error
+		if errPhoto != nil {
+			panic(errPhoto)
+		}
+		comment[i].Photo = &photo
 	}
 
 	ctx.JSON(http.StatusOK, comment)
@@ -30,6 +43,8 @@ func GetAllComment(ctx *gin.Context) {
 func GetComment(ctx *gin.Context) {
 	db := database.GetDB()
 	userData := ctx.MustGet("userData").(jwt.MapClaims)
+	user := models.APIUser{}
+	photo := models.Photo{}
 	comment := models.Comment{}
 	CommentID, _ := strconv.Atoi(ctx.Param("CommentID"))
 
@@ -41,12 +56,30 @@ func GetComment(ctx *gin.Context) {
 		panic(err)
 	}
 
+	errUser := db.Model(&models.User{}).First(&user, "id=?", comment.UserID).Error
+	if errUser != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, errUser)
+		return
+	}
+
+	comment.User = &user
+
+	errPhoto := db.Model(&models.Photo{}).First(&photo, "id=?", comment.PhotoID).Error
+	if errPhoto != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, errPhoto)
+		return
+	}
+
+	comment.Photo = &photo
+
 	ctx.JSON(http.StatusOK, comment)
 }
 
 func CreateComment(ctx *gin.Context) {
 	db := database.GetDB()
 	userData := ctx.MustGet("userData").(jwt.MapClaims)
+	user := models.APIUser{}
+	photo := models.Photo{}
 	comment := models.Comment{}
 
 	err := ctx.ShouldBindJSON(&comment)
@@ -65,12 +98,30 @@ func CreateComment(ctx *gin.Context) {
 		return
 	}
 
+	errUser := db.Model(&models.User{}).First(&user, "id=?", comment.UserID).Error
+	if errUser != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, errUser)
+		return
+	}
+
+	comment.User = &user
+
+	errPhoto := db.Model(&models.Photo{}).First(&photo, "id=?", comment.PhotoID).Error
+	if errPhoto != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, errPhoto)
+		return
+	}
+
+	comment.Photo = &photo
+
 	ctx.JSON(http.StatusCreated, comment)
 }
 
 func UpdateComment(ctx *gin.Context) {
 	db := database.GetDB()
 	userData := ctx.MustGet("userData").(jwt.MapClaims)
+	user := models.APIUser{}
+	photo := models.Photo{}
 	comment := models.Comment{}
 	CommentID, _ := strconv.Atoi(ctx.Param("CommentID"))
 
@@ -87,6 +138,22 @@ func UpdateComment(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
+
+	errUser := db.Model(&models.User{}).First(&user, "id=?", comment.UserID).Error
+	if errUser != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, errUser)
+		return
+	}
+
+	comment.User = &user
+
+	errPhoto := db.Model(&models.Photo{}).First(&photo, "id=?", comment.PhotoID).Error
+	if errPhoto != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, errPhoto)
+		return
+	}
+
+	comment.Photo = &photo
 
 	ctx.JSON(http.StatusOK, comment)
 }

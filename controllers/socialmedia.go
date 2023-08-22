@@ -13,15 +13,21 @@ import (
 
 func GetAllSocialMedia(ctx *gin.Context) {
 	db := database.GetDB()
-	userData := ctx.MustGet("userData").(jwt.MapClaims)
-	socialMedia := models.SocialMedia{}
-
-	socialMedia.UserID = uint(userData["id"].(float64))
+	socialMedia := []models.SocialMedia{} // Initialize socialMedia as a slice
 
 	err := db.Find(&socialMedia).Error
 
 	if err != nil {
 		panic(err)
+	}
+
+	for i := range socialMedia {
+		user := models.APIUser{}
+		errUser := db.Model(&models.User{}).Find(&user, "id=?", socialMedia[i].UserID).Error
+		if errUser != nil {
+			panic(errUser)
+		}
+		socialMedia[i].User = &user
 	}
 
 	ctx.JSON(http.StatusOK, socialMedia)
@@ -30,6 +36,7 @@ func GetAllSocialMedia(ctx *gin.Context) {
 func GetSocialMedia(ctx *gin.Context) {
 	db := database.GetDB()
 	userData := ctx.MustGet("userData").(jwt.MapClaims)
+	user := models.APIUser{}
 	socialMedia := models.SocialMedia{}
 	socialMediaID, _ := strconv.Atoi(ctx.Param("socialMediaID"))
 
@@ -41,12 +48,21 @@ func GetSocialMedia(ctx *gin.Context) {
 		panic(err)
 	}
 
+	errUser := db.Model(&models.User{}).First(&user, "id=?", socialMedia.UserID).Error
+	if errUser != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, errUser)
+		return
+	}
+
+	socialMedia.User = &user
+
 	ctx.JSON(http.StatusOK, socialMedia)
 }
 
 func CreateSocialMedia(ctx *gin.Context) {
 	db := database.GetDB()
 	userData := ctx.MustGet("userData").(jwt.MapClaims)
+	user := models.APIUser{}
 	socialMedia := models.SocialMedia{}
 
 	err := ctx.ShouldBindJSON(&socialMedia)
@@ -65,12 +81,21 @@ func CreateSocialMedia(ctx *gin.Context) {
 		return
 	}
 
+	errUser := db.Model(&models.User{}).First(&user, "id=?", socialMedia.UserID).Error
+	if errUser != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, errUser)
+		return
+	}
+
+	socialMedia.User = &user
+
 	ctx.JSON(http.StatusCreated, socialMedia)
 }
 
 func UpdateSocialMedia(ctx *gin.Context) {
 	db := database.GetDB()
 	userData := ctx.MustGet("userData").(jwt.MapClaims)
+	user := models.APIUser{}
 	socialMedia := models.SocialMedia{}
 	socialMediaID, _ := strconv.Atoi(ctx.Param("socialMediaID"))
 
@@ -87,6 +112,14 @@ func UpdateSocialMedia(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
+
+	errUser := db.Model(&models.User{}).First(&user, "id=?", socialMedia.UserID).Error
+	if errUser != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, errUser)
+		return
+	}
+
+	socialMedia.User = &user
 
 	ctx.JSON(http.StatusOK, socialMedia)
 }

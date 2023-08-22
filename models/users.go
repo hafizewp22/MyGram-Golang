@@ -19,6 +19,13 @@ type User struct {
 	Comment  []Comment     `json:"comments"`
 }
 
+type APIUser struct {
+	GORMModel
+	Username string `gorm:"not null" json:"username" validate:"required-Username is required"`
+	Email    string `gorm:"not null;unique;type:varchar(100)" json:"email" validate:"required-Email is required,email-Invalid email format"`
+	Age      int    `gorm:"not null" json:"age" validate:"required-Age is required, MinLength(8)-Age has to have a minimum of 8 age"`
+}
+
 func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
 	_, err = govalidator.ValidateStruct(u)
 	if err != nil {

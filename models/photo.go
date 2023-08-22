@@ -11,7 +11,7 @@ type Photo struct {
 	Title    string `gorm:"not null" json:"title" validate:"required-Title is required"`
 	Caption  string `gorm:"not null" json:"caption" validate:"required-Caption is required"`
 	PhotoURL string `gorm:"not null" json:"photo_url" validate:"required-Photo URL is required"`
-	User     *User
+	User     *APIUser
 	Comment  []Comment `json:"comments"`
 }
 

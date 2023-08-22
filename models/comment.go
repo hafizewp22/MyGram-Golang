@@ -11,7 +11,7 @@ type Comment struct {
 	PhotoID uint   `gorm:"not null" json:"photo_id"`
 	Name    string `gorm:"not null" json:"name" validate:"required-Name is required"`
 	Message string `gorm:"not null" json:"message" validate:"required-Message is required"`
-	User    *User
+	User    *APIUser
 	Photo   *Photo
 }
 

@@ -10,7 +10,7 @@ type SocialMedia struct {
 	UserID         uint   `gorm:"not null" json:"user_id"`
 	Name           string `gorm:"not null" json:"name" validate:"required-Name is required"`
 	SosialMediaURL string `gorm:"not null" json:"social_media_url" validate:"required-Sosial Media URL is required"`
-	User           *User
+	User           *APIUser
 }
 
 func (p *SocialMedia) BeforeCreateSocialMedia(tx *gorm.DB) (err error) {
